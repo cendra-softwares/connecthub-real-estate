@@ -70,12 +70,6 @@ export function Navigation() {
             >
               Home
             </Link>
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
-            >
-              Dashboard
-            </Link>
             {user ? (
               <div className="relative">
                 <button
@@ -87,6 +81,13 @@ export function Navigation() {
                 {/* Dropdown menu */}
                 {profileDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg py-1 z-50 border-gray-200">
+                    <Link
+                      href="/dashboard"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setProfileDropdownOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -127,19 +128,19 @@ export function Navigation() {
             >
               Home
             </Link>
-            <Link
-              href="/dashboard"
-              className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Dashboard
-            </Link>
             {user ? (
               <div className="space-y-1">
                 <div className="flex items-center px-3 py-2 text-base font-medium text-gray-700">
                   <User size={20} className="mr-2" />
                   <span>Profile</span>
                 </div>
+                <Link
+                  href="/dashboard"
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="w-full text-left rounded-lg px-3 py-2 text-base font-medium text-red-600 hover:bg-red-50"

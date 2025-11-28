@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Home, Store, TreePine } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -9,8 +9,7 @@ interface Category {
   name: string;
   description: string;
   property_count: number;
-  icon: any;
-  gradient: string;
+  image: string;
 }
 
 export function PropertyCategories() {
@@ -53,43 +52,39 @@ export function PropertyCategories() {
           })
         );
 
-        // Add appropriate icons and gradients based on category names
-        const categoriesWithIcons = categoriesWithCounts.map((category) => {
-          let icon, gradient;
+        // Add appropriate images based on category names
+        const categoriesWithImages = categoriesWithCounts.map((category) => {
+          let image;
 
-          // Map category names to icons and gradients
+          // Map category names to images
           switch (category.name.toLowerCase()) {
             case "apartment":
-              icon = Building2;
-              gradient = "from-blue-500 to-cyan-500";
+              image = "/images/categories/apartment.png";
               break;
             case "house":
+              image = "/images/categories/house.png";
+              break;
             case "villa":
-              icon = Home;
-              gradient = "from-green-500 to-emerald-500";
+              image = "/images/categories/villa.png";
               break;
             case "commercial":
-              icon = Store;
-              gradient = "from-purple-500 to-pink-500";
+              image = "/images/categories/commercial.png";
               break;
             case "land":
-              icon = TreePine;
-              gradient = "from-orange-500 to-red-500";
+              image = "/images/categories/land.png";
               break;
             default:
-              // Default to home icon for any other category
-              icon = Home;
-              gradient = "from-gray-500 to-slate-500";
+              // Default fallback
+              image = "/images/categories/house.png";
           }
 
           return {
             ...category,
-            icon,
-            gradient,
+            image,
           };
         });
 
-        setCategories(categoriesWithIcons);
+        setCategories(categoriesWithImages);
       } catch (err) {
         console.error("Error in fetchCategories:", err);
       } finally {
@@ -117,11 +112,9 @@ export function PropertyCategories() {
             {[1, 2, 3, 4].map((index) => (
               <div
                 key={index}
-                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-6 animate-pulse"
+                className="group relative overflow-hidden rounded-2xl bg-gray-100 h-64 animate-pulse"
               >
-                <div className="h-14 w-14 bg-gray-200 rounded-xl mb-4"></div>
-                <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="absolute inset-0 bg-gray-200"></div>
               </div>
             ))}
           </div>
@@ -143,35 +136,49 @@ export function PropertyCategories() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <div
-                key={category.id}
-                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-6 transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer"
-              >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 transition-opacity group-hover:opacity-10`}
-                />
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="group relative overflow-hidden rounded-2xl h-80 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+            >
+              <Image
+                src={category.image}
+                alt={category.name}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-90" />
 
-                <div
-                  className={`mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${category.gradient} text-white shadow-lg`}
-                >
-                  <Icon className="h-7 w-7" />
-                </div>
-
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <div className="absolute bottom-0 left-0 p-6 w-full transform transition-transform duration-300 translate-y-2 group-hover:translate-y-0">
+                <h3 className="text-2xl font-bold text-white mb-2">
                   {category.name.charAt(0).toUpperCase() +
                     category.name.slice(1)}
                 </h3>
 
-                <p className="text-sm text-gray-600">
-                  {category.property_count}{" "}
-                  {category.property_count === 1 ? "Property" : "Properties"}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-gray-200">
+                    {category.property_count}{" "}
+                    {category.property_count === 1 ? "Property" : "Properties"}
+                  </p>
+                  <div className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 transform translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </section>
