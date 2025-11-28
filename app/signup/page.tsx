@@ -18,6 +18,14 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
@@ -35,7 +43,14 @@ export default function SignupPage() {
     });
 
     if (error) {
-      setError(error.message);
+      // Provide more user-friendly error message
+      if (error.message.includes("invalid")) {
+        setError(
+          "The email address is invalid. Please use a valid email format (e.g., user@example.com)"
+        );
+      } else {
+        setError(error.message);
+      }
       console.error("Signup error:", error);
     } else if (data.user) {
       // Create a profile in the profiles table
