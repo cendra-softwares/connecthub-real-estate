@@ -4,11 +4,13 @@ import Link from "next/link";
 import { Menu, X, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -23,8 +25,12 @@ export function Navigation() {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        router.push("/");
+        router.refresh();
+      }
+      setUser(session?.user ?? null);
     });
 
     return () => {
@@ -33,9 +39,15 @@ export function Navigation() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    // Optionally redirect to home page after logout
-    window.location.href = "/";
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfileDropdownOpen(false);
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   return (
@@ -105,7 +117,7 @@ export function Navigation() {
       </div>
 
       {/* Mobile Navigation */}
-      {profileDropdownOpen && (
+      {mobileMenuOpen && (
         <div className="border-t bg-white md:hidden">
           <div className="space-y-1 px-4 pb-3 pt-2">
             <Link
