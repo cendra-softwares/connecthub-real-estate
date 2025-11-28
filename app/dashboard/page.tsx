@@ -2,11 +2,9 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import Link from "next/link";
-import { Navigation } from "@/components/navigation";
-import { Footer } from "@/components/footer";
-import { Home, Users, FileText, Settings } from "lucide-react";
+import { Home, Users, FileText, Settings, ArrowUpRight, Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import AddPropertyForm from "@/components/add-property-form";
+import { StatCard } from "@/components/ui/stat-card";
 
 interface ActivityItem {
   id: number;
@@ -20,16 +18,14 @@ export default function DashboardPage() {
   const [totalProperties, setTotalProperties] = useState<number>(0);
   const [activeListings, setActiveListings] = useState<number>(0);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
-  const [showAddProperty, setShowAddProperty] = useState(false);
-  const totalClients = 142; // Keeping the original value as this might be from a different table
-  const pendingTasks = 7; // Keeping the original value as this might be from a different table
+  const totalClients = 142;
+  const pendingTasks = 7;
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
-    // Fetch properties data with category names
     const { data: properties, error } = await supabase
       .from("properties")
       .select(
@@ -38,191 +34,142 @@ export default function DashboardPage() {
         property_categories!inner (name)
       `
       )
-      .order("created_at", { ascending: false }); // Order by newest first
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching properties:", error);
     } else {
       setTotalProperties(properties.length);
-      setActiveListings(properties.length); // All properties are active listings
+      setActiveListings(properties.length);
 
-      // Create recent activity based on properties
       const activity = properties
         .map((property: any, index) => ({
           id: index + 1,
-          icon: <Home className="h-4 w-4 text-green-700" />,
+          icon: <Home className="h-4 w-4 text-white" />,
           title: "New property listed",
           description: `${property.title} - ${property.location}`,
           time: `${index + 1} hours ago`,
         }))
-        .slice(0, 3); // Limit to 3 recent activities
+        .slice(0, 5);
 
       setRecentActivity(activity);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">
-            Welcome back! Here's an overview of your account.
-          </p>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+          <p className="text-gray-500 mt-1">Welcome back! Here's what's happening today.</p>
         </div>
+        <Link
+          href="/dashboard/properties/add"
+          className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+        >
+          <Plus className="h-4 w-4" />
+          Add Property
+        </Link>
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Properties</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalProperties}
-                </p>
-              </div>
-              <div className="bg-green-100 rounded-lg p-3">
-                <Home className="h-6 w-6 text-green-700" />
-              </div>
-            </div>
-          </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Properties"
+          value={totalProperties}
+          icon={<Home className="h-6 w-6" />}
+          color="green"
+          trend={{ value: 12, label: "vs last month" }}
+        />
+        <StatCard
+          title="Active Listings"
+          value={activeListings}
+          icon={<FileText className="h-6 w-6" />}
+          color="blue"
+          trend={{ value: 8, label: "vs last month" }}
+        />
+        <StatCard
+          title="Total Clients"
+          value={totalClients}
+          icon={<Users className="h-6 w-6" />}
+          color="purple"
+          trend={{ value: 24, label: "vs last month" }}
+        />
+        <StatCard
+          title="Pending Tasks"
+          value={pendingTasks}
+          icon={<Settings className="h-6 w-6" />}
+          color="orange"
+          trend={{ value: -5, label: "vs last month" }}
+        />
+      </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Active Listings</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {activeListings}
-                </p>
-              </div>
-              <div className="bg-blue-10 rounded-lg p-3">
-                <FileText className="h-6 w-6 text-blue-700" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Clients</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalClients}
-                </p>
-              </div>
-              <div className="bg-purple-100 rounded-lg p-3">
-                <Users className="h-6 w-6 text-purple-700" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Pending Tasks</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {pendingTasks}
-                </p>
-              </div>
-              <div className="bg-orange-100 rounded-lg p-3">
-                <Settings className="h-6 w-6 text-orange-700" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <button
-              onClick={() => setShowAddProperty(true)}
-              className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all"
-            >
-              <div className="bg-green-10 rounded-lg p-2">
-                <Home className="h-5 w-5 text-green-700" />
-              </div>
-              <span className="font-medium text-gray-900">
-                Add New Property
-              </span>
-            </button>
-            <button className="flex items-center gap-3 p-4 rounded-lg border-gray-20 hover:border-blue-500 hover:bg-blue-50 transition-all">
-              <div className="bg-blue-10 rounded-lg p-2">
-                <Users className="h-5 w-5 text-blue-700" />
-              </div>
-              <span className="font-medium text-gray-900">Manage Clients</span>
-            </button>
-            <button className="flex items-center gap-3 p-4 rounded-lg border-gray-20 hover:border-purple-500 hover:bg-purple-50 transition-all">
-              <div className="bg-purple-100 rounded-lg p-2">
-                <FileText className="h-5 w-5 text-purple-700" />
-              </div>
-              <span className="font-medium text-gray-900">View Reports</span>
-            </button>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Recent Activity
-          </h2>
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-start gap-4 pb-4 border-b border-gray-100"
-              >
-                <div className="bg-gray-100 rounded-full p-2">
-                  {activity.icon}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+            <button className="text-sm text-green-600 hover:text-green-700 font-medium">View All</button>
+          </div>
+          <div className="p-6">
+            <div className="space-y-6">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="flex gap-4">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-green-600 flex items-center justify-center shadow-sm">
+                    {activity.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {activity.title}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {activity.description}
+                    </p>
+                  </div>
+                  <div className="text-sm text-gray-400 whitespace-nowrap">
+                    {activity.time}
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    {activity.title}
-                  </p>
-                  <p className="text-xs text-gray-700 mt-1">
-                    {activity.description}
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">{activity.time}</p>
+              ))}
+              {recentActivity.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No recent activity found.
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions / Mini Profile */}
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl shadow-lg p-6 text-white">
+            <h3 className="text-lg font-semibold mb-2">Pro Plan</h3>
+            <p className="text-green-100 text-sm mb-6">You are currently on the Pro plan. Upgrade to unlock more features.</p>
+            <button className="w-full bg-white text-green-700 py-2 rounded-lg font-medium hover:bg-green-50 transition-colors">
+              Manage Subscription
+            </button>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
+            <div className="space-y-3">
+              <Link href="/dashboard/properties" className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group">
+                <span className="text-gray-600 group-hover:text-gray-900">Manage Properties</span>
+                <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+              </Link>
+              <Link href="/dashboard/clients" className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group">
+                <span className="text-gray-600 group-hover:text-gray-900">Client Directory</span>
+                <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+              </Link>
+              <Link href="/dashboard/settings" className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group">
+                <span className="text-gray-600 group-hover:text-gray-900">Account Settings</span>
+                <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Add Property Modal */}
-      {showAddProperty && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto text-gray-900">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Add New Property
-                </h2>
-                <button
-                  onClick={() => setShowAddProperty(false)}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  ✕
-                </button>
-              </div>
-              <AddPropertyForm
-                onSuccess={() => {
-                  setShowAddProperty(false);
-                  // Refresh dashboard data
-                  fetchDashboardData();
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <Footer />
     </div>
   );
 }

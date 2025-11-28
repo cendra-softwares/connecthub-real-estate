@@ -6,16 +6,24 @@ import { useRouter } from "next/navigation";
 
 interface AddPropertyFormProps {
   onSuccess?: () => void;
+  initialData?: any;
 }
 
-export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("");
-  const [beds, setBeds] = useState(1);
-  const [area, setArea] = useState("");
+export default function AddPropertyForm({
+  onSuccess,
+  initialData,
+}: AddPropertyFormProps) {
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [description, setDescription] = useState(
+    initialData?.description || ""
+  );
+  const [price, setPrice] = useState(initialData?.price || "");
+  const [location, setLocation] = useState(initialData?.location || "");
+  const [category, setCategory] = useState(
+    initialData?.property_categories?.name || ""
+  );
+  const [beds, setBeds] = useState(initialData?.beds || 1);
+  const [area, setArea] = useState(initialData?.area || "");
   const [categories, setCategories] = useState<{ id: number; name: string }[]>(
     []
   );
@@ -37,10 +45,9 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
           setError("Failed to load categories. Please refresh the page.");
         } else {
           setCategories(data || []);
-          if (data && data.length > 0) {
-            setCategory(data[0].name); // Set default to first category
-          } else {
-            // If no categories exist, set an empty array and clear the selection
+          if (data && data.length > 0 && !category) {
+            setCategory(data[0].name); // Set default to first category if not editing
+          } else if (data && data.length === 0) {
             setCategories([]);
             setCategory("");
           }
@@ -97,31 +104,48 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
 
       const categoryId = categoryData.id;
 
-      const { error } = await supabase.from("properties").insert([
-        {
-          title,
-          description,
-          price: parseFloat(price) || 0,
-          location,
-          user_id: userId,
-          category_id: categoryId,
-          beds: parseInt(beds.toString()),
-          area: parseFloat(area) || 0,
-        },
-      ]);
+      const propertyData = {
+        title,
+        description,
+        price: parseFloat(price) || 0,
+        location,
+        user_id: userId,
+        category_id: categoryId,
+        beds: parseInt(beds.toString()),
+        area: parseFloat(area) || 0,
+      };
+
+      let error;
+
+      if (initialData) {
+        // Update existing property
+        const { error: updateError } = await supabase
+          .from("properties")
+          .update(propertyData)
+          .eq("id", initialData.id);
+        error = updateError;
+      } else {
+        // Insert new property
+        const { error: insertError } = await supabase
+          .from("properties")
+          .insert([propertyData]);
+        error = insertError;
+      }
 
       if (error) {
         throw error;
       }
 
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setPrice("");
-      setLocation("");
-      setCategory(categories.length > 0 ? categories[0].name : "");
-      setBeds(1);
-      setArea("");
+      // Reset form if adding new
+      if (!initialData) {
+        setTitle("");
+        setDescription("");
+        setPrice("");
+        setLocation("");
+        setCategory(categories.length > 0 ? categories[0].name : "");
+        setBeds(1);
+        setArea("");
+      }
 
       if (onSuccess) {
         onSuccess();
@@ -130,8 +154,8 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
       // Refresh the page to update the dashboard
       router.refresh();
     } catch (err: any) {
-      setError(err.message || "An error occurred while adding the property");
-      console.error("Error adding property:", err);
+      setError(err.message || "An error occurred while saving the property");
+      console.error("Error saving property:", err);
     } finally {
       setLoading(false);
     }
@@ -140,7 +164,7 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        Add New Property
+        {initialData ? "Edit Property" : "Add New Property"}
       </h2>
       {error && (
         <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
@@ -177,7 +201,7 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
             placeholder="Property description"
             rows={3}
           />
@@ -197,7 +221,7 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
               placeholder="Price"
               step="0.01"
             />
@@ -216,7 +240,7 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
               placeholder="Location"
             />
           </div>
@@ -234,7 +258,7 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
               disabled={categories.length === 0}
               key="category-select"
             >
@@ -268,7 +292,7 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
               min="0"
               value={beds}
               onChange={(e) => setBeds(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
             />
           </div>
         </div>
@@ -285,7 +309,7 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
             id="area"
             value={area}
             onChange={(e) => setArea(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
             placeholder="Area in square feet"
             step="0.01"
           />
@@ -297,7 +321,11 @@ export default function AddPropertyForm({ onSuccess }: AddPropertyFormProps) {
             disabled={loading}
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            {loading ? "Adding..." : "Add Property"}
+            {loading
+              ? "Saving..."
+              : initialData
+              ? "Update Property"
+              : "Add Property"}
           </button>
         </div>
       </form>

@@ -4,6 +4,8 @@ import { Search, MapPin, Home } from "lucide-react"
 import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
 import Image from "next/image"
+import { SliderDots } from "@/components/ui/slider-dots"
+import { useCallback, useEffect, useState } from "react"
 
 const HERO_IMAGES = [
     "/hero-images/hero-1.png",
@@ -13,7 +15,27 @@ const HERO_IMAGES = [
 ]
 
 export function HeroSection() {
-    const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 4000 })])
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 4000 })])
+    const [selectedIndex, setSelectedIndex] = useState(0)
+    const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
+
+    const scrollTo = useCallback((index: number) => {
+        if (emblaApi) {
+            emblaApi.scrollTo(index)
+        }
+    }, [emblaApi])
+
+    useEffect(() => {
+        if (emblaApi) {
+            setScrollSnaps(emblaApi.scrollSnapList())
+            const onSelect = () => {
+                setSelectedIndex(emblaApi.selectedScrollSnap())
+            }
+            onSelect()
+            emblaApi.on("select", onSelect)
+            emblaApi.on("reInit", onSelect)
+        }
+    }, [emblaApi])
 
     return (
         <section className="relative overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-12 sm:py-16 lg:py-20">
@@ -56,6 +78,11 @@ export function HeroSection() {
                                 ))}
                             </div>
                         </div>
+                        <SliderDots
+                            scrollSnaps={scrollSnaps}
+                            selectedIndex={selectedIndex}
+                            scrollTo={scrollTo}
+                        />
 
                         {/* Decorative elements around slider */}
                         <div className="absolute -bottom-6 -left-6 -z-10 h-64 w-64 rounded-full bg-green-200 opacity-20 blur-3xl" />
